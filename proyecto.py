@@ -1,5 +1,4 @@
 #Programa para leer archivo excel y devolver valores como una lista
-from ast import Return
 import pandas as pd
 import math as m
 
@@ -11,9 +10,11 @@ df_datos=df[df['Ang.Obs(GGGMMSS)']!=0]
 
 angulos_list=df_datos['Ang.Obs(GGGMMSS)'].tolist()
 
+
 dist_list=df_datos['Dist'].tolist()
 
 vertices= len(angulos_list)-1
+
 
 class Topoutils():
     def gms_angle_to_decimals(self, gms_angle):
@@ -75,9 +76,9 @@ class Topoutils():
                     cardinal_point=['S','E',180]
             elif dx_sign==-1:
                 if dy_sign==1:
-                    cardinal_point=['N','W',180] 
+                    cardinal_point=['N','W',360] 
                 else:
-                    cardinal_point=['S','W',360]
+                    cardinal_point=['S','W',180]
             else:
                 if dy_sign==1:
                     cardinal_point=['N', '',0]
@@ -99,16 +100,26 @@ class Topoutils():
         return self.azimut
         
     def azimut_adyacente(self,azimut,angulo):
-        azimut+=angulo+180
+        azimut+=angulo
+
         if azimut>360:
-            azimut_ady=azimut-360
+            azimut-=360
         else:
-            azimut_ady=azimut
-        self.azimut=azimut_ady
+            azimut=azimut
+        
+        contAzimut=azimut+180
+
+        if contAzimut>360:
+            contAzimut-=360
+        else:
+            contAzimut=contAzimut
+
+        self.azimut=[azimut,contAzimut]
+
         return self.azimut
     def proy(self,azimut,dist):
-        proy_y=(m.degrees(m.cos(azimut)))*dist
-        proy_x=(m.degrees(m.sin(azimut)))*dist
+        proy_y=((m.cos(m.radians(azimut))))*dist
+        proy_x=((m.sin(m.radians(azimut))))*dist
         self.coord=[proy_x,proy_y]
         return self.coord
 
@@ -123,7 +134,7 @@ def main():
     error_ang=info_topo.error_angular(suma)
 
     corr_error=info_topo.correccion_error(error_ang)
-    
+  
 
     suma_ang_corr=0
     ang_corr_list=[]
@@ -132,6 +143,8 @@ def main():
         angulocorr=angulo_decimal+corr_error
         ang_corr_list.append(angulocorr)
         suma_ang_corr+=angulocorr
+    
+
 
 
     rumbo=info_topo.bearing_and_distance()
@@ -139,26 +152,31 @@ def main():
     
     azimut_inicial=info_topo.azimut_ini(rumbo)
 
-    print(ang_corr_list)
-    print(azimut_inicial)
-    azimut=[azimut_inicial]
+    azimut=[]
+    contraAzimut=[azimut_inicial]
+    lista=0
     for angulo in ang_corr_list:
-        for lista in range(vertices+1):
-            azimut_ady= info_topo.azimut_adyacente(azimut[lista],angulo)
-            azimut.append(azimut_ady)
+        while lista!=len(ang_corr_list):
+            azimut_ady= info_topo.azimut_adyacente(contraAzimut[lista],angulo)
+            lista+=1
+            azimut.append(azimut_ady[0])
+            contraAzimut.append(azimut_ady[1])
             break
-    azimut_corr=azimut[1:-1]
+
+    azimut_corr=azimut[:-1]
+    
+    print(dist_list)
     print(azimut_corr)
 
     coord=[]
-    for azimut2 in azimut_corr:
+    for azimut in azimut_corr:
         for dist in dist_list:
-            coord_px_py=info_topo.proy(azimut2,dist)
+            coord_px_py=info_topo.proy(azimut,dist)
             coord.append(coord_px_py)
             break
     print(coord)
 
-    
+
 
     
 
