@@ -14,6 +14,8 @@ angulos_list=df_datos['Ang.Obs(GGGMMSS)'].tolist()
 
 dist_list=df_datos['Dist'].tolist()
 
+dist_list=dist_list[:-1]
+
 vertices= len(angulos_list)-1
 
 
@@ -42,7 +44,7 @@ class Topoutils():
         return self.suma
 
     def error_angular(self,suma_angulo):
-        sentido = float(input("digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: \n"))
+        sentido = float(input("Digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: "))
         if sentido==1:
                 angulos_i = suma_angulo
                 angulos_it = float((vertices-2)*180+360)
@@ -190,8 +192,57 @@ class Topoutils():
 
         self.suma_coord=[sumacoord_x,sumacoord_y]
         return self.suma_coord
-        
 
+    def error_dist_suma_dist_precision(self,suma_coord):
+
+        error_dist=m.sqrt(m.pow(suma_coord[0],2) + m.pow(suma_coord[1],2))
+        
+        suma_dist=0
+        for dist in dist_list:
+            suma_dist+=dist
+            
+        precision=suma_dist/error_dist
+
+        self.error_dist_suma_dist_precision=[error_dist,suma_dist,precision]
+        return self.error_dist_suma_dist_precision
+
+    def corr_error_proy(self,error,list_coord):
+        if error>0:
+            corr_error=-error/len(list_coord)
+        if error<0:
+            corr_error=abs(error)/len(list_coord)
+        self.corr_error=corr_error
+        return self.corr_error
+    def corr_proyecciones(self,list_coord,suma_coord):
+        suma_proy_x_corr=0
+        list_proy_x_corr=[]
+        centinela=0
+        index=0
+        for proy_x in list_coord:
+            while centinela!=len(list_coord):
+                proy_x_corr=proy_x[index]+self.corr_error_proy(suma_coord[index],list_coord)
+                list_proy_x_corr.append(proy_x_corr)
+                suma_proy_x_corr+=proy_x_corr
+                centinela+=1
+                break
+        suma_proy_x_corr=round(suma_proy_x_corr,3)
+
+
+        suma_proy_y_corr=0
+        list_proy_y_corr=[]
+        centinela=0
+        index=1   
+        for proy_y in list_coord:
+            while centinela!=len(list_coord):
+                proy_y_corr=proy_y[index]+self.corr_error_proy(suma_coord[index],list_coord)
+                list_proy_y_corr.append(proy_y_corr)
+                suma_proy_y_corr+=proy_y_corr
+                centinela+=1
+                break
+        suma_proy_y_corr=round(suma_proy_y_corr,3)
+                
+        self.corr_proyecciones=[list_proy_y_corr,list_proy_x_corr,suma_proy_y_corr,suma_proy_x_corr]
+        return self.corr_proyecciones
 def main():
     info_topo =Topoutils()
 
@@ -212,6 +263,20 @@ def main():
     list_coord=info_topo.coord_list(azimut_corr,dist_list)
     
     suma_coord=info_topo.suma_coord(list_coord,azimut_corr)
+
+    error_dist_suma_dist_precision=info_topo.error_dist_suma_dist_precision(suma_coord)
+
+    list_proy_corr=info_topo.corr_proyecciones(list_coord,suma_coord )
+
+   
+    
+    
+    
+    
+
+
+    
+
 
     
 if __name__ == main():
