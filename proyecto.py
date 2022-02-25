@@ -76,6 +76,8 @@ class Topoutils():
         return self.suma_and_corr_ang
 
     def bearing_and_distance(self):
+        global x1
+        global y1
         x1=float(input('Digite la coordenada X1: '))
         y1=float(input('Digite la coordenada Y1: '))
         x2=float(input('Digite la coordenada X2: '))
@@ -214,24 +216,10 @@ class Topoutils():
         self.corr_error=corr_error
         return self.corr_error
     def corr_proyecciones(self,list_coord,suma_coord):
-        suma_proy_x_corr=0
-        list_proy_x_corr=[]
-        centinela=0
-        index=0
-        for proy_x in list_coord:
-            while centinela!=len(list_coord):
-                proy_x_corr=proy_x[index]+self.corr_error_proy(suma_coord[index],list_coord)
-                list_proy_x_corr.append(proy_x_corr)
-                suma_proy_x_corr+=proy_x_corr
-                centinela+=1
-                break
-        suma_proy_x_corr=round(suma_proy_x_corr,3)
-
-
         suma_proy_y_corr=0
         list_proy_y_corr=[]
         centinela=0
-        index=1   
+        index=0
         for proy_y in list_coord:
             while centinela!=len(list_coord):
                 proy_y_corr=proy_y[index]+self.corr_error_proy(suma_coord[index],list_coord)
@@ -240,9 +228,43 @@ class Topoutils():
                 centinela+=1
                 break
         suma_proy_y_corr=round(suma_proy_y_corr,3)
+
+
+        suma_proy_x_corr=0
+        list_proy_x_corr=[]
+        centinela=0
+        index=1   
+        for proy_x in list_coord:
+            while centinela!=len(list_coord):
+                proy_x_corr=proy_x[index]+self.corr_error_proy(suma_coord[index],list_coord)
+                list_proy_x_corr.append(proy_x_corr)
+                suma_proy_x_corr+=proy_x_corr
+                centinela+=1
+                break
+        suma_proy_x_corr=round(suma_proy_x_corr,3)
                 
         self.corr_proyecciones=[list_proy_y_corr,list_proy_x_corr,suma_proy_y_corr,suma_proy_x_corr]
         return self.corr_proyecciones
+    def coordenadas(self,list_proy_corr):
+
+        list_coord_y=[y1]
+        contador=0
+        for coord in list_proy_corr[0]:
+            coord_y=list_coord_y[contador]+coord
+            contador+=1
+            list_coord_y.append(round(coord_y,3))
+
+
+        list_coord_x=[x1]
+        contador=0
+        for coord in list_proy_corr[1]:
+            coord_x=list_coord_x[contador]+coord
+            contador+=1
+            list_coord_x.append(round(coord_x,3))
+        
+        self.coord_finales=[list_coord_y,list_coord_x]
+        return self.coord_finales
+
 def main():
     info_topo =Topoutils()
 
@@ -268,7 +290,12 @@ def main():
 
     list_proy_corr=info_topo.corr_proyecciones(list_coord,suma_coord )
 
-   
+    coordenadas_finales=info_topo.coordenadas(list_proy_corr)
+
+    print(coordenadas_finales)
+    
+        
+        
     
     
     
