@@ -3,7 +3,7 @@
 import pandas as pd
 import math as m
 
-inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePol"
+inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
 
 
 df=pd.read_excel(inputfile)
