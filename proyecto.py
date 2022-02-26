@@ -1,16 +1,27 @@
 #Programa para leer archivo excel y devolver valores como una lista
 
+
+from cmath import nan
 import pandas as pd
 import math as m
 
 inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
 
+
 df=pd.read_excel(inputfile)
+
+deltas_list=df['Δ'].to_list()
+
+puntos_list=df['ο'].to_list()
+
+ang_list_df_final=df['Ang.Obs(GGGMMSS)'].to_list()
+
+dist_list_df_final=df['Dist'].to_list()
+
 
 df_datos=df[df['Ang.Obs(GGGMMSS)']!=0]
 
 angulos_list=df_datos['Ang.Obs(GGGMMSS)'].tolist()
-
 
 dist_list=df_datos['Dist'].tolist()
 
@@ -29,10 +40,17 @@ class Topoutils():
         return self.decimal_angle
 
     def decimal_angle_to_gms(self, decimal_angle, total_decimals =0):
-        minutes, degree_part = m.modf(decimal_angle)
-        seconds, minutes = m.modf(minutes*60)
+        if decimal_angle>=0:
+            grados=int(decimal_angle)
+            minutos=int((decimal_angle-grados)*60)
+            segundos=round((((decimal_angle-grados)*60)-minutos)*60,0)
+            self.gms_angle=("{}° {}'{}".format(grados,minutos,segundos))
 
-        self.gms_angle= "{}° {}' {}'' ".format(int(degree_part),int(minutes),round(seconds,total_decimals))
+        else:
+            grados=int(abs(decimal_angle))
+            minutos=int(abs(decimal_angle-grados)*60)
+            segundos=round(abs(((decimal_angle-grados)*60)-minutos)*60,0)
+            self.gms_angle=("-{}° {}'{}".format(grados,minutos,segundos))
         return self.gms_angle
 
     def suma_ang(self,angulos_list):
@@ -78,10 +96,16 @@ class Topoutils():
     def bearing_and_distance(self):
         global x1
         global y1
+        """
         x1=float(input('Digite la coordenada X1: '))
         y1=float(input('Digite la coordenada Y1: '))
         x2=float(input('Digite la coordenada X2: '))
         y2=float(input('Digite la coordenada Y2: '))
+        """
+        x1=2161.421
+        y1=1115.933
+        x2=2160.644
+        y2=1148.983
         dx = x2 -x1
         dy = y2-y1
         distancia_2d = m.sqrt(dx**2+dy**2)
@@ -150,7 +174,7 @@ class Topoutils():
                 azimut.append(azimut_ady[0])
                 contraAzimut.append(azimut_ady[1])
                 break
-        self.azimut_corr=azimut[:-1]
+        self.azimut_corr=[azimut,contraAzimut,azimut[:-1]]
         return self.azimut_corr
 
     def proy(self,azimut,dist):
@@ -265,6 +289,90 @@ class Topoutils():
         self.coord_finales=[list_coord_y,list_coord_x]
         return self.coord_finales
 
+    #Funciones Datafream
+    def pd_list_ang(self,ang_list_df_final):
+
+        list_ang=[]
+        for ang in ang_list_df_final:
+            angulo=self.gms_angle_to_decimals(ang)
+            angulo_gms=self.decimal_angle_to_gms(angulo)
+            list_ang.append(angulo_gms)
+
+        self.list=list_ang
+        return self.list
+
+    def pd_list_corr(self,ang_list_df_final,corr_error):
+
+        list_corr_df_final=[]
+        for ang in ang_list_df_final:
+            if ang!=0:
+                correcion=self.decimal_angle_to_gms(corr_error)
+                list_corr_df_final.append(correcion)
+            else:
+                list_corr_df_final.append('NaN')
+
+        self.ang_corr=list_corr_df_final
+        return self.ang_corr
+
+    def pd_list_ang_corr(self,suma_and_list_ang):
+
+        list_ang_corr_df_final=[]
+        contador=0
+        while contador!=len(suma_and_list_ang[1]):
+            list_ang_corr_df_final.append('NaN')
+            angulo_gms=self.decimal_angle_to_gms(suma_and_list_ang[1][contador])
+            list_ang_corr_df_final.append(angulo_gms)
+            contador+=1
+
+        self.list=list_ang_corr_df_final
+        return self.list
+
+    def pd_list_azimut(self,azimut_corr):
+
+        list_azimut_df_final=[]
+        contador=0
+        while contador!=len(azimut_corr[0]):
+            contra_azimut=self.decimal_angle_to_gms(azimut_corr[1][contador])
+            list_azimut_df_final.append(contra_azimut)
+            azimut=self.decimal_angle_to_gms(azimut_corr[0][contador])
+            list_azimut_df_final.append(azimut)
+            contador+=1
+
+        self.list=list_azimut_df_final
+        return self.list
+    def agregar_nan(self,list1,list2,list3):
+
+        contador=len(list1)
+        while len(list1)!=len(list2):
+            list3.append('NaN')
+            contador+=1
+        self.list=list3
+        return self.list
+
+    def pd_list_proyeccionesN(self,list_coord,ang_list_df_final):
+
+        list_proyecciones_N=[]
+        contador=0
+        while contador!=len(list_coord):
+            list_proyecciones_N.append('NaN')
+            list_proyecciones_N.append(round(list_coord[contador][0],3))
+            contador+=1
+
+        self.list_nan=self.agregar_nan(list_proyecciones_N, ang_list_df_final,list_proyecciones_N)
+        return self.list_nan
+
+    def pd_list_proyeccionesE(self,list_coord,ang_list_df_final):
+        list_proyecciones_E=[]
+        contador=0
+        while contador!=len(list_coord):
+            list_proyecciones_E.append('NaN')
+            list_proyecciones_E.append(round(list_coord[contador][1],3))
+            contador+=1
+
+        self.list_nan=self.agregar_nan(list_proyecciones_E, ang_list_df_final,list_proyecciones_E)
+        return self.list_nan
+
+
 def main():
     info_topo =Topoutils()
 
@@ -281,8 +389,8 @@ def main():
     azimut_inicial=info_topo.azimut_ini(rumbo)
 
     azimut_corr=info_topo.azimut_and_contra(azimut_inicial, suma_and_list_ang[1])
- 
-    list_coord=info_topo.coord_list(azimut_corr,dist_list)
+
+    list_coord=info_topo.coord_list(azimut_corr[2],dist_list)
     
     suma_coord=info_topo.suma_coord(list_coord,azimut_corr)
 
@@ -292,19 +400,42 @@ def main():
 
     coordenadas_finales=info_topo.coordenadas(list_proy_corr)
 
-    print(coordenadas_finales)
-    
+
+    #Funciones para datafream
+    list_ang=info_topo.pd_list_ang(ang_list_df_final)
+
+    list_corr_df_final=info_topo.pd_list_corr(ang_list_df_final,corr_error)
         
-        
+    list_ang_corr_df_final=info_topo.pd_list_ang_corr(suma_and_list_ang)
+
+    list_azimut_df_final=info_topo.pd_list_azimut(azimut_corr)
     
-    
-    
-    
+    list_proyecciones_N=info_topo.pd_list_proyeccionesN(list_coord,ang_list_df_final)
+
+    list_proyecciones_E=info_topo.pd_list_proyeccionesE(list_coord,ang_list_df_final)
+
+
 
 
     
-
-
+    dic_pol={
+        u'\u0394':deltas_list,
+        u'\u03bf':puntos_list,
+        'Ang.Obs(GGGMMSS)':list_ang,
+        'Corr(GGGMMSS)':list_corr_df_final,
+        'Ang.corr(GGGMMSS)':list_ang_corr_df_final,
+        'Azimut(GGGMMSS)':list_azimut_df_final,
+        'Dist':dist_list_df_final,
+        'Proy N':list_proyecciones_N,
+        'Proy E':list_proyecciones_E
+        }
+    df_pol=pd.DataFrame(dic_pol)
+    df_pol=df_pol.replace("NaN"," ")
+    df_pol=df_pol.fillna(" ")
+    print(df_pol)
+    ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
+    df_pol.to_excel(ruta+r'\Pol_rtas.xlsx',index=False)
+    
     
 if __name__ == main():
     main()
