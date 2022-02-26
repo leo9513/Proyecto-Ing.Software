@@ -1,11 +1,9 @@
 #Programa para leer archivo excel y devolver valores como una lista
 
-
-from cmath import nan
 import pandas as pd
 import math as m
 
-inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
+inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePol"
 
 
 df=pd.read_excel(inputfile)
@@ -232,21 +230,28 @@ class Topoutils():
         self.error_dist_suma_dist_precision=[error_dist,suma_dist,precision]
         return self.error_dist_suma_dist_precision
 
-    def corr_error_proy(self,error,list_coord):
+    def corr_error_proy(self,error, list_dist, suma_dist,centinela):
         if error>0:
-            corr_error=-error/len(list_coord)
+            corr_error=-(list_dist[centinela]*error)/suma_dist
         if error<0:
-            corr_error=abs(error)/len(list_coord)
+            corr_error=(list_dist[centinela]*abs(error))/suma_dist
         self.corr_error=corr_error
         return self.corr_error
-    def corr_proyecciones(self,list_coord,suma_coord):
+    def corr_proyecciones(self,list_coord,suma_coord,list_dist):
+        suma_dist=0
+        for dist in dist_list:
+            suma_dist+=dist
+
         suma_proy_y_corr=0
         list_proy_y_corr=[]
+        corr_error_y=[]
         centinela=0
         index=0
         for proy_y in list_coord:
             while centinela!=len(list_coord):
-                proy_y_corr=proy_y[index]+self.corr_error_proy(suma_coord[index],list_coord)
+                error_proy_y=self.corr_error_proy(suma_coord[index],list_dist,suma_dist,centinela)
+                corr_error_y.append(round(error_proy_y,3))
+                proy_y_corr=proy_y[index]+error_proy_y
                 list_proy_y_corr.append(proy_y_corr)
                 suma_proy_y_corr+=proy_y_corr
                 centinela+=1
@@ -256,18 +261,21 @@ class Topoutils():
 
         suma_proy_x_corr=0
         list_proy_x_corr=[]
+        corr_error_x=[]
         centinela=0
-        index=1   
+        index=1       
         for proy_x in list_coord:
             while centinela!=len(list_coord):
-                proy_x_corr=proy_x[index]+self.corr_error_proy(suma_coord[index],list_coord)
+                error_proy_x=self.corr_error_proy(suma_coord[index],list_dist,suma_dist,centinela)
+                corr_error_x.append(round(error_proy_x,3))
+                proy_x_corr=proy_x[index]+error_proy_x
                 list_proy_x_corr.append(proy_x_corr)
                 suma_proy_x_corr+=proy_x_corr
                 centinela+=1
                 break
         suma_proy_x_corr=round(suma_proy_x_corr,3)
                 
-        self.corr_proyecciones=[list_proy_y_corr,list_proy_x_corr,suma_proy_y_corr,suma_proy_x_corr]
+        self.corr_proyecciones=[list_proy_y_corr,list_proy_x_corr,corr_error_y,corr_error_x , suma_proy_y_corr,suma_proy_x_corr]
         return self.corr_proyecciones
     def coordenadas(self,list_proy_corr):
 
@@ -362,6 +370,7 @@ class Topoutils():
         return self.list_nan
 
     def pd_list_proyeccionesE(self,list_coord,ang_list_df_final):
+
         list_proyecciones_E=[]
         contador=0
         while contador!=len(list_coord):
@@ -372,6 +381,57 @@ class Topoutils():
         self.list_nan=self.agregar_nan(list_proyecciones_E, ang_list_df_final,list_proyecciones_E)
         return self.list_nan
 
+    def pd_list_corr_proy_y(self,list_proy_corr,ang_list_df_final):
+
+        list_corr_y=[]
+        contador=0
+        index=2
+        while contador!=len(list_proy_corr[2]):
+            list_corr_y.append('NaN')
+            list_corr_y.append(list_proy_corr[index][contador])
+            contador+=1
+            
+        self.list_nan=self.agregar_nan(list_corr_y, ang_list_df_final,list_corr_y)
+        return self.list_nan
+
+    def pd_list_corr_proy_x(self, list_proy_corr,ang_list_df_final):
+
+        list_corr_x=[]
+        contador=0
+        index=3
+        while contador!=len(list_proy_corr[2]):
+            list_corr_x.append('NaN')
+            list_corr_x.append(list_proy_corr[index][contador])
+            contador+=1
+
+        self.list_nan=self.agregar_nan(list_corr_x, ang_list_df_final,list_corr_x)
+        return self.list_nan
+    
+    def pd_list_coord_proy_y(self,coordenadas_finales):
+
+        coordenadas_y=[]
+        contador=0
+        index=0
+        while contador!=len(coordenadas_finales[index]):
+            coordenadas_y.append('NaN')
+            coordenadas_y.append(coordenadas_finales[index][contador])
+            contador+=1
+
+        self.list_nan=coordenadas_y
+        return self.list_nan
+
+    def pd_list_coord_proy_x(self,coordenadas_finales):
+
+        coordenadas_x=[]
+        contador=0
+        index=1
+        while contador!=len(coordenadas_finales[index]):
+            coordenadas_x.append('NaN')
+            coordenadas_x.append(coordenadas_finales[index][contador])
+            contador+=1
+
+        self.list_nan=coordenadas_x
+        return self.list_nan
 
 def main():
     info_topo =Topoutils()
@@ -396,10 +456,10 @@ def main():
 
     error_dist_suma_dist_precision=info_topo.error_dist_suma_dist_precision(suma_coord)
 
-    list_proy_corr=info_topo.corr_proyecciones(list_coord,suma_coord )
+
+    list_proy_corr=info_topo.corr_proyecciones(list_coord,suma_coord,dist_list)
 
     coordenadas_finales=info_topo.coordenadas(list_proy_corr)
-
 
     #Funciones para datafream
     list_ang=info_topo.pd_list_ang(ang_list_df_final)
@@ -414,10 +474,14 @@ def main():
 
     list_proyecciones_E=info_topo.pd_list_proyeccionesE(list_coord,ang_list_df_final)
 
+    list_corr_y=info_topo.pd_list_corr_proy_y(list_proy_corr,ang_list_df_final)
 
+    list_corr_x=info_topo.pd_list_corr_proy_x(list_proy_corr,ang_list_df_final)
 
+    coordenadas_y=info_topo.pd_list_coord_proy_y(coordenadas_finales)
 
-    
+    coordenadas_x=info_topo.pd_list_coord_proy_x(coordenadas_finales)
+ 
     dic_pol={
         u'\u0394':deltas_list,
         u'\u03bf':puntos_list,
@@ -426,16 +490,32 @@ def main():
         'Ang.corr(GGGMMSS)':list_ang_corr_df_final,
         'Azimut(GGGMMSS)':list_azimut_df_final,
         'Dist':dist_list_df_final,
-        'Proy N':list_proyecciones_N,
-        'Proy E':list_proyecciones_E
+        'Proy Y':list_proyecciones_N,
+        'Proy X':list_proyecciones_E
+        }
+    dic_2_pol={
+        'Proy Y':list_proyecciones_N,
+        'Proy X':list_proyecciones_E,
+        'Corr Y':list_corr_y,
+        'Corr X':list_corr_x,
+        'Coord N':coordenadas_y,
+        'Coord E':coordenadas_x
         }
     df_pol=pd.DataFrame(dic_pol)
     df_pol=df_pol.replace("NaN"," ")
     df_pol=df_pol.fillna(" ")
-    print(df_pol)
+
+    df_pol2=pd.DataFrame(dic_2_pol)
+    df_pol2=df_pol2.replace("NaN"," ")
+    df_pol2=df_pol2.fillna(" ")
+
+
     ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
-    df_pol.to_excel(ruta+r'\Pol_rtas.xlsx',index=False)
-    
-    
+    writer= pd.ExcelWriter(ruta+r'\Pol_rtas.xlsx')
+    df_pol.to_excel(writer, sheet_name='Proyecciones', index=False)
+    df_pol2.to_excel(writer, sheet_name='Coordenadas', index=False)
+    writer.save()
+
+
 if __name__ == main():
     main()
