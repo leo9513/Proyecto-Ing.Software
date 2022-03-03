@@ -2,9 +2,8 @@
 
 import pandas as pd
 import math as m
-
-inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
-
+inputfile=input("Ingrese la ruta en la que se guardara el archivo base: \n")
+#inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
 
 df=pd.read_excel(inputfile)
 
@@ -60,7 +59,7 @@ class Topoutils():
         return self.suma
 
     def error_angular(self,suma_angulo):
-        sentido = float(input("Digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: "))
+        sentido = float(input("Digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: \n"))
         if sentido==1:
                 angulos_i = suma_angulo
                 angulos_it = float((vertices-2)*180+360)
@@ -94,16 +93,11 @@ class Topoutils():
     def bearing_and_distance(self):
         global x1
         global y1
-        """
-        x1=float(input('Digite la coordenada X1: '))
-        y1=float(input('Digite la coordenada Y1: '))
-        x2=float(input('Digite la coordenada X2: '))
-        y2=float(input('Digite la coordenada Y2: '))
-        """
-        x1=2161.421
-        y1=1115.933
-        x2=2160.644
-        y2=1148.983
+        x1=float(input('Digite la coordenada X1: \n'))
+        y1=float(input('Digite la coordenada Y1: \n'))
+        x2=float(input('Digite la coordenada X2: \n'))
+        y2=float(input('Digite la coordenada Y2: \n'))
+
         dx = x2 -x1
         dy = y2-y1
         distancia_2d = m.sqrt(dx**2+dy**2)
@@ -508,9 +502,8 @@ def main():
     df_pol2=pd.DataFrame(dic_2_pol)
     df_pol2=df_pol2.replace("NaN"," ")
     df_pol2=df_pol2.fillna(" ")
-
-
-    ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
+    ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
+    #ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
     writer= pd.ExcelWriter(ruta+r'\Pol_rtas.xlsx')
     df_pol.to_excel(writer, sheet_name='Proyecciones', index=False)
     df_pol2.to_excel(writer, sheet_name='Coordenadas', index=False)
