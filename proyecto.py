@@ -1,9 +1,10 @@
 #Programa para leer archivo excel y devolver valores como una lista
 
+from http.client import PRECONDITION_FAILED
 import pandas as pd
 import math as m
-inputfile=input("Ingrese la ruta en la que se guardara el archivo base: \n")
-#inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
+#inputfile=input("Ingrese la ruta en la que se guardara el archivo base: \n")
+inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
 
 df=pd.read_excel(inputfile)
 
@@ -15,7 +16,6 @@ ang_list_df_final=df['Ang.Obs(GGGMMSS)'].to_list()
 
 dist_list_df_final=df['Dist'].to_list()
 
-
 df_datos=df[df['Ang.Obs(GGGMMSS)']!=0]
 
 angulos_list=df_datos['Ang.Obs(GGGMMSS)'].tolist()
@@ -25,6 +25,10 @@ dist_list=df_datos['Dist'].tolist()
 dist_list=dist_list[:-1]
 
 vertices= len(angulos_list)-1
+
+list_parametros_ang=['\u03A3'+'OBS','\u03A3'+'Teo','e ang','e perm','corr ang']
+
+list_parametros_proyecciones=['\u03A3'+'DIST','\u0394'+'PNS','\u0394'+'PEW','e dist','P']
 
 
 class Topoutils():
@@ -62,15 +66,15 @@ class Topoutils():
         sentido = float(input("Digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: \n"))
         if sentido==1:
                 angulos_i = suma_angulo
-                angulos_it = float((vertices-2)*180+360)
-                cierre = float(angulos_i-angulos_it)
+                angulos_teo = float((vertices-2)*180+360)
+                cierre = float(angulos_i-angulos_teo)
         else:
             angulos_e = suma_angulo
-            angulos_et = float((vertices+2)*180)
-            cierre = float(angulos_e-angulos_et)
-        self.cierre=cierre
-        return self.cierre   
-    
+            angulos_teo = float((vertices+2)*180)
+            cierre = float(angulos_e-angulos_teo)
+        self.cierre_and_angTeo=[cierre,angulos_teo]
+        return self.cierre_and_angTeo   
+        
     def correccion_error(self,error):
         if error>0:
             corr_error=-error/(vertices+1)
@@ -78,6 +82,22 @@ class Topoutils():
             corr_error=abs(error)/(vertices+1)
         self.corr_error=corr_error
         return self.corr_error
+
+    def error_per(self, error_angular):
+
+        precision_estacion=float(input("Ingrese el precisión a la que mide la estación GGGMMSS \n"))
+
+        error_perm=precision_estacion*vertices
+        error_permi=self.gms_angle_to_decimals(error_perm)
+        error_permitido=self.decimal_angle_to_gms(error_permi)
+
+        error_angular_gms=self.decimal_angle_to_gms(abs(error_angular[0]))
+
+        if abs(error_angular[0])>=error_permi:
+            print("Devuelvase a campo mi papá, tiene un error angular de "+str(error_angular_gms)+" y el permitido es de "+str(error_permitido))
+            quit()
+        self.error_permitido=error_permitido
+        return error_permitido
 
     def suma_and_corr_ang(self,angulos_list,corr_error):
         suma_ang_corr=0
@@ -93,11 +113,17 @@ class Topoutils():
     def bearing_and_distance(self):
         global x1
         global y1
-        x1=float(input('Digite la coordenada X1: \n'))
-        y1=float(input('Digite la coordenada Y1: \n'))
-        x2=float(input('Digite la coordenada X2: \n'))
-        y2=float(input('Digite la coordenada Y2: \n'))
 
+        """
+        x1=float(input('Digite la coordenada X1: '))
+        y1=float(input('Digite la coordenada Y1: '))
+        x2=float(input('Digite la coordenada X2: '))
+        y2=float(input('Digite la coordenada Y2: '))
+        """
+        x1=2161.421
+        y1=1115.933
+        x2=2160.644
+        y2=1148.983
         dx = x2 -x1
         dy = y2-y1
         distancia_2d = m.sqrt(dx**2+dy**2)
@@ -190,25 +216,25 @@ class Topoutils():
 
     def suma_coord(self,coord,azimut_corr):
 
-        sumacoord_x=0
-        centinela=0
-        index=0
-        for coordenada in coord:
-            while centinela!=len(azimut_corr):
-                sumacoord_x+=coordenada[index]
-                centinela+=1
-                break
-        
         sumacoord_y=0
         centinela=0
-        index=1
+        index=0
         for coordenada in coord:
             while centinela!=len(azimut_corr):
                 sumacoord_y+=coordenada[index]
                 centinela+=1
                 break
+        
+        sumacoord_x=0
+        centinela=0
+        index=1
+        for coordenada in coord:
+            while centinela!=len(azimut_corr):
+                sumacoord_x+=coordenada[index]
+                centinela+=1
+                break
 
-        self.suma_coord=[sumacoord_x,sumacoord_y]
+        self.suma_coord=[sumacoord_y,sumacoord_x]
         return self.suma_coord
 
     def error_dist_suma_dist_precision(self,suma_coord):
@@ -221,6 +247,9 @@ class Topoutils():
             
         precision=suma_dist/error_dist
 
+        if precision<=9000:
+            print("Devuelvase a campo mi papá, la precisión es de "+str(precision))
+            quit()
         self.error_dist_suma_dist_precision=[error_dist,suma_dist,precision]
         return self.error_dist_suma_dist_precision
 
@@ -231,6 +260,7 @@ class Topoutils():
             corr_error=(list_dist[centinela]*abs(error))/suma_dist
         self.corr_error=corr_error
         return self.corr_error
+
     def corr_proyecciones(self,list_coord,suma_coord,list_dist):
         suma_dist=0
         for dist in dist_list:
@@ -427,6 +457,19 @@ class Topoutils():
         self.list_nan=coordenadas_x
         return self.list_nan
 
+    def pd_list_parametros_ang(self, suma_ang,error_ang, error_per, corr_error):
+        suma_obs=self.decimal_angle_to_gms(suma_ang)
+        suma_teo=self.decimal_angle_to_gms(error_ang[1])
+        error_ang=self.decimal_angle_to_gms(error_ang[0])
+        corr=self.decimal_angle_to_gms(corr_error)
+        list_parametros_ang=[suma_obs, suma_teo,error_ang,error_per,corr]
+        self.list_parametros_ang=list_parametros_ang
+        return self.list_parametros_ang
+
+    def pd_list_parametros_proyecciones(self, error_dist_suma_dist_precision,suma_coord):
+        list_parametros_proyecciones=[error_dist_suma_dist_precision[1],suma_coord[0],suma_coord[1],error_dist_suma_dist_precision[0],error_dist_suma_dist_precision[2]]
+        self.list_parametros_proyecciones=list_parametros_proyecciones
+        return self.list_parametros_proyecciones
 def main():
     info_topo =Topoutils()
 
@@ -434,8 +477,10 @@ def main():
 
     error_ang=info_topo.error_angular(suma_ang)
 
-    corr_error=info_topo.correccion_error(error_ang)
-  
+    error_per=info_topo.error_per(error_ang)
+
+    corr_error=info_topo.correccion_error(error_ang[0])
+
     suma_and_list_ang=info_topo.suma_and_corr_ang(angulos_list,corr_error)
     
     rumbo=info_topo.bearing_and_distance()
@@ -450,12 +495,14 @@ def main():
 
     error_dist_suma_dist_precision=info_topo.error_dist_suma_dist_precision(suma_coord)
 
-
     list_proy_corr=info_topo.corr_proyecciones(list_coord,suma_coord,dist_list)
 
     coordenadas_finales=info_topo.coordenadas(list_proy_corr)
 
+
+
     #Funciones para datafream
+
     list_ang=info_topo.pd_list_ang(ang_list_df_final)
 
     list_corr_df_final=info_topo.pd_list_corr(ang_list_df_final,corr_error)
@@ -475,7 +522,11 @@ def main():
     coordenadas_y=info_topo.pd_list_coord_proy_y(coordenadas_finales)
 
     coordenadas_x=info_topo.pd_list_coord_proy_x(coordenadas_finales)
- 
+
+    list_parametros_ang2=info_topo.pd_list_parametros_ang(suma_ang, error_ang,error_per,corr_error)
+
+    list_parametros_proyecciones2=info_topo.pd_list_parametros_proyecciones(error_dist_suma_dist_precision,suma_coord)
+        
     dic_pol={
         u'\u0394':deltas_list,
         u'\u03bf':puntos_list,
@@ -487,6 +538,7 @@ def main():
         'Proy Y':list_proyecciones_N,
         'Proy X':list_proyecciones_E
         }
+
     dic_2_pol={
         'Proy Y':list_proyecciones_N,
         'Proy X':list_proyecciones_E,
@@ -495,6 +547,14 @@ def main():
         'Coord N':coordenadas_y,
         'Coord E':coordenadas_x
         }
+
+    dic_3_pol={
+        '':list_parametros_ang,
+        ' ':list_parametros_ang2,
+        '  ':list_parametros_proyecciones,
+        '   ':list_parametros_proyecciones2,
+        }
+
     df_pol=pd.DataFrame(dic_pol)
     df_pol=df_pol.replace("NaN"," ")
     df_pol=df_pol.fillna(" ")
@@ -502,11 +562,17 @@ def main():
     df_pol2=pd.DataFrame(dic_2_pol)
     df_pol2=df_pol2.replace("NaN"," ")
     df_pol2=df_pol2.fillna(" ")
-    ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
-    #ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
+
+    df_pol3=pd.DataFrame(dic_3_pol)
+    df_pol3=df_pol3.replace("NaN"," ")
+    df_pol3=df_pol3.fillna(" ")
+
+    #ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
+    ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
     writer= pd.ExcelWriter(ruta+r'\Pol_rtas.xlsx')
     df_pol.to_excel(writer, sheet_name='Proyecciones', index=False)
     df_pol2.to_excel(writer, sheet_name='Coordenadas', index=False)
+    df_pol3.to_excel(writer, sheet_name='Parametros Pol', index=False)
     writer.save()
 
 
