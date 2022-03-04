@@ -115,10 +115,10 @@ class Topoutils():
         global y1
 
         
-        x1=float(input('Digite la coordenada X1: '))
-        y1=float(input('Digite la coordenada Y1: '))
-        x2=float(input('Digite la coordenada X2: '))
-        y2=float(input('Digite la coordenada Y2: '))
+        x1=float(input('Digite la coordenada Este del punto de armada: '))
+        y1=float(input('Digite la coordenada Norte del punto de armada: '))
+        x2=float(input('Digite la coordenada Este del punto visado: '))
+        y2=float(input('Digite la coordenada Norte del punto visado: '))
         """
         x1=2161.421
         y1=1115.933
@@ -221,7 +221,7 @@ class Topoutils():
         centinela=0
         index=0
         for coordenada in coord:
-            while centinela!=len(azimut_corr):
+            while centinela!=len(azimut_corr[2]):
                 sumacoord_y+=coordenada[index]
                 centinela+=1
                 break
@@ -230,7 +230,7 @@ class Topoutils():
         centinela=0
         index=1
         for coordenada in coord:
-            while centinela!=len(azimut_corr):
+            while centinela!=len(azimut_corr[2]):
                 sumacoord_x+=coordenada[index]
                 centinela+=1
                 break
