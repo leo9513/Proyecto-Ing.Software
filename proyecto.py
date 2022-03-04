@@ -3,8 +3,8 @@
 from http.client import PRECONDITION_FAILED
 import pandas as pd
 import math as m
-#inputfile=input("Ingrese la ruta en la que se guardara el archivo base: \n")
-inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
+inputfile=input("Ingrese la ruta en la que se guardara el archivo base: \n")
+#inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
 
 df=pd.read_excel(inputfile)
 
@@ -114,7 +114,7 @@ class Topoutils():
         global x1
         global y1
 
-        """
+        
         x1=float(input('Digite la coordenada X1: '))
         y1=float(input('Digite la coordenada Y1: '))
         x2=float(input('Digite la coordenada X2: '))
@@ -124,6 +124,7 @@ class Topoutils():
         y1=1115.933
         x2=2160.644
         y2=1148.983
+        """
         dx = x2 -x1
         dy = y2-y1
         distancia_2d = m.sqrt(dx**2+dy**2)
@@ -567,8 +568,8 @@ def main():
     df_pol3=df_pol3.replace("NaN"," ")
     df_pol3=df_pol3.fillna(" ")
 
-    #ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
-    ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
+    ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
+    #ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
     writer= pd.ExcelWriter(ruta+r'\Pol_rtas.xlsx')
     df_pol.to_excel(writer, sheet_name='Proyecciones', index=False)
     df_pol2.to_excel(writer, sheet_name='Coordenadas', index=False)
