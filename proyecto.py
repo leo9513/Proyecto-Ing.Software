@@ -1,10 +1,9 @@
 #Programa para leer archivo excel y devolver valores como una lista
 
-from http.client import PRECONDITION_FAILED
 import pandas as pd
 import math as m
-inputfile=input("Ingrese la ruta en la que se guardara el archivo base: \n")
-#inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
+#inputfile=input("Ingrese la ruta en la que se guardara el archivo base: \n")
+inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
 
 df=pd.read_excel(inputfile)
 
@@ -63,7 +62,8 @@ class Topoutils():
         return self.suma
 
     def error_angular(self,suma_angulo):
-        sentido = float(input("Digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: \n"))
+        #sentido = float(input("Digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: \n"))
+        sentido=2
         if sentido==1:
                 angulos_i = suma_angulo
                 angulos_teo = float((vertices-2)*180+360)
@@ -85,8 +85,8 @@ class Topoutils():
 
     def error_per(self, error_angular):
 
-        precision_estacion=float(input("Ingrese el precisión a la que mide la estación GGGMMSS \n"))
-
+        #precision_estacion=float(input("Ingrese el precisión a la que mide la estación GGGMMSS \n"))
+        precision_estacion=10
         error_perm=precision_estacion*vertices
         error_permi=self.gms_angle_to_decimals(error_perm)
         error_permitido=self.decimal_angle_to_gms(error_permi)
@@ -113,7 +113,7 @@ class Topoutils():
     def bearing_and_distance(self):
         global x1
         global y1
-
+        """
         
         x1=float(input('Digite la coordenada Este del punto de armada: '))
         y1=float(input('Digite la coordenada Norte del punto de armada: '))
@@ -124,7 +124,7 @@ class Topoutils():
         y1=1115.933
         x2=2160.644
         y2=1148.983
-        """
+
         dx = x2 -x1
         dy = y2-y1
         distancia_2d = m.sqrt(dx**2+dy**2)
@@ -197,8 +197,8 @@ class Topoutils():
         return self.azimut_corr
 
     def proy(self,azimut,dist):
-        proy_y=((m.cos(m.radians(azimut))))*dist
-        proy_x=((m.sin(m.radians(azimut))))*dist
+        proy_y=round(((m.cos(m.radians(azimut))))*dist,3)
+        proy_x=round(((m.sin(m.radians(azimut))))*dist,3)
         self.coord=[proy_y,proy_x]
         return self.coord
     
@@ -216,6 +216,7 @@ class Topoutils():
     
 
     def suma_coord(self,coord,azimut_corr):
+
 
         sumacoord_y=0
         centinela=0
@@ -254,54 +255,164 @@ class Topoutils():
         self.error_dist_suma_dist_precision=[error_dist,suma_dist,precision]
         return self.error_dist_suma_dist_precision
 
-    def corr_error_proy(self,error, list_dist, suma_dist,centinela):
+    def corr_error_proy_brujula(self,error, suma_dist_list, suma_dist,centinela):
         if error>0:
-            corr_error=-(list_dist[centinela]*error)/suma_dist
+            corr_error=-(suma_dist_list[centinela]*error)/suma_dist
         if error<0:
-            corr_error=(list_dist[centinela]*abs(error))/suma_dist
+            corr_error=(suma_dist_list[centinela]*abs(error))/suma_dist
+        self.corr_error=corr_error
+        return self.corr_error
+
+    def corr_error_proy_transito(self,error, suma_acumulada, acumulada_transito,centinela):
+        if error>0:
+            corr_error=-(acumulada_transito[centinela]*error)/suma_acumulada
+        if error<0:
+            corr_error=(acumulada_transito[centinela]*abs(error))/suma_acumulada
+        self.corr_error=corr_error
+        return self.corr_error
+
+    def corr_error_proy_crandall(self,error, suma_acumulada, acumulada_transito,centinela):
+        if error>0:
+            corr_error=-(acumulada_transito[centinela]*error)/suma_acumulada
+        if error<0:
+            corr_error=(acumulada_transito[centinela]*abs(error))/suma_acumulada
         self.corr_error=corr_error
         return self.corr_error
 
     def corr_proyecciones(self,list_coord,suma_coord,list_dist):
+
         suma_dist=0
-        for dist in dist_list:
+        suma_dist_list=[]
+        for dist in list_dist:
             suma_dist+=dist
+            suma_dist_list.append(suma_dist)
 
-        suma_proy_y_corr=0
-        list_proy_y_corr=[]
-        corr_error_y=[]
-        centinela=0
-        index=0
-        for proy_y in list_coord:
-            while centinela!=len(list_coord):
-                error_proy_y=self.corr_error_proy(suma_coord[index],list_dist,suma_dist,centinela)
-                corr_error_y.append(round(error_proy_y,3))
-                proy_y_corr=proy_y[index]+error_proy_y
-                list_proy_y_corr.append(proy_y_corr)
-                suma_proy_y_corr+=proy_y_corr
-                centinela+=1
-                break
-        suma_proy_y_corr=round(suma_proy_y_corr,3)
+        #corr_user=int(input("Digite '1,2 o 3' para corregir segun el metodo: \n1.Brujula \n2.Transito \n3.Crandall \n"))
+        corr_user=3
+        if corr_user==3:
 
 
-        suma_proy_x_corr=0
-        list_proy_x_corr=[]
-        corr_error_x=[]
-        centinela=0
-        index=1       
-        for proy_x in list_coord:
-            while centinela!=len(list_coord):
-                error_proy_x=self.corr_error_proy(suma_coord[index],list_dist,suma_dist,centinela)
-                corr_error_x.append(round(error_proy_x,3))
-                proy_x_corr=proy_x[index]+error_proy_x
-                list_proy_x_corr.append(proy_x_corr)
-                suma_proy_x_corr+=proy_x_corr
-                centinela+=1
-                break
-        suma_proy_x_corr=round(suma_proy_x_corr,3)
+            suma_proy_y_corr=0
+            suma_proy_x_corr=0
+            list_proy_y_corr=[]
+            list_proy_x_corr=[]
+            corr_error_y=[]
+            corr_error_x=[]
+            F1=[]
+            F2=[]
+            F3=[]
+
+            centinela=0  
+            print(list_coord)
+            for proy in list_coord:
+                while centinela!=len(list_coord):
+
+                    suma_f1=0
+                    suma_f2=0
+                    suma_f3=0
+
+                    valor1=(proy[0]*proy[1])/list_dist[centinela]
+                    valor2=(m.pow(proy[0],2))/list_dist[centinela]
+                    valor3=(m.pow(proy[1],2))/list_dist[centinela]
+                    F1.append(valor1)
+                    F2.append(valor2)
+                    F3.append(valor3)
+                    centinela+=1
+                    for valor in F1:
+                        suma_f1+=valor
+                    for valor2 in F2:
+                        suma_f2+=valor2
+                    for valor3 in F3:
+                        suma_f3+=valor3
+                    A=( ( (suma_coord[1]*suma_f1)- (suma_coord[0]*suma_f3) )/ ( (suma_f3*suma_f2) - (m.pow(suma_f1,2) ) ) )
+                    B=( ( (suma_coord[0]*suma_f1)- (suma_coord[1]*suma_f2) )/ ( (suma_f3*suma_f2) - (m.pow(suma_f1,2) ) ) )
+                    break
+
+
+            print(suma_coord)
+            print(suma_f1)
+            print(suma_f2)
+            print(suma_f3)
+            print(A)
+            print(B)
+            suma_proy_y_corr=round(suma_proy_y_corr,3)
+        else:
+            suma_proy_y_corr=0
+            list_proy_y_corr=[]
+            corr_error_y=[]
+            centinela=0
+            index=0    
+    
+            n_sumatoria=[]
+            n=0
+            for corrd_y in list_coord:
+                n+=abs(corrd_y[index])
+                n_sumatoria.append(n)
+
+            for proy_y in list_coord:
+                suma_auxiliar=0
+                while centinela!=len(list_coord):
+                    if centinela==0:
+                        if corr_user==1:
+                            corr_proy_y=self.corr_error_proy_brujula(suma_coord[index],suma_dist_list,suma_dist,centinela)
+                        elif corr_user==2:
+                            corr_proy_y=self.corr_error_proy_transito(suma_coord[index],n,n_sumatoria,centinela)
+                    else:
+                        for auxilia in corr_error_y:
+                            suma_auxiliar+=auxilia
+                        if corr_user==1:
+                            corr_proy_y=self.corr_error_proy_brujula(suma_coord[index],suma_dist_list,suma_dist,centinela)-suma_auxiliar
+                        elif corr_user==2:
+                            corr_proy_y=self.corr_error_proy_transito(suma_coord[index],n,n_sumatoria,centinela)-suma_auxiliar
+                    corr_error_y.append(round(corr_proy_y,3))
+                    proy_y_corr=proy_y[index]+(round(corr_proy_y,3))
+                    list_proy_y_corr.append(proy_y_corr)
+                    suma_proy_y_corr+=proy_y_corr
+                    centinela+=1
+                    break
+            suma_proy_y_corr=round(suma_proy_y_corr,3)
+
+
+            suma_proy_x_corr=0
+            list_proy_x_corr=[]
+            corr_error_x=[]
+            centinela=0
+            index=1
+            e_sumatoria=[]
+            e=0
+            for corrd_y in list_coord:
+                e+=abs(corrd_y[index])
+                e_sumatoria.append(e)  
+
+            for proy_x in list_coord:
+                suma_auxiliar=0
+                while centinela!=len(list_coord):
+                    if centinela==0:
+                        if corr_user==1:
+                            corr_proy_x=self.corr_error_proy_brujula(suma_coord[index],suma_dist_list,suma_dist,centinela)
+                        elif corr_user==2:
+                            corr_proy_x=self.corr_error_proy_transito(suma_coord[index],e,e_sumatoria,centinela)
+                    else:
+                        for auxilia in corr_error_x:
+                            suma_auxiliar+=auxilia
+                        if corr_user==1:
+                            corr_proy_x=self.corr_error_proy_brujula(suma_coord[index],suma_dist_list,suma_dist,centinela)-suma_auxiliar
+                        elif corr_user==2:
+                            corr_proy_x=self.corr_error_proy_transito(suma_coord[index],e,e_sumatoria,centinela)-suma_auxiliar
+                    corr_error_x.append(round(corr_proy_x,3))
+                    proy_x_corr=proy_x[index]+round(corr_proy_x,3)
+                    list_proy_x_corr.append(proy_x_corr)
+                    suma_proy_x_corr+=proy_x_corr
+                    centinela+=1
+                    break
+                
+
+            suma_proy_x_corr=round(suma_proy_x_corr,3)
                 
         self.corr_proyecciones=[list_proy_y_corr,list_proy_x_corr,corr_error_y,corr_error_x , suma_proy_y_corr,suma_proy_x_corr]
+        
         return self.corr_proyecciones
+    
     def coordenadas(self,list_proy_corr):
 
         list_coord_y=[y1]
@@ -464,6 +575,7 @@ class Topoutils():
         error_ang=self.decimal_angle_to_gms(error_ang[0])
         corr=self.decimal_angle_to_gms(corr_error)
         list_parametros_ang=[suma_obs, suma_teo,error_ang,error_per,corr]
+
         self.list_parametros_ang=list_parametros_ang
         return self.list_parametros_ang
 
@@ -497,6 +609,7 @@ def main():
     error_dist_suma_dist_precision=info_topo.error_dist_suma_dist_precision(suma_coord)
 
     list_proy_corr=info_topo.corr_proyecciones(list_coord,suma_coord,dist_list)
+
 
     coordenadas_finales=info_topo.coordenadas(list_proy_corr)
 
@@ -568,8 +681,8 @@ def main():
     df_pol3=df_pol3.replace("NaN"," ")
     df_pol3=df_pol3.fillna(" ")
 
-    ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
-    #ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
+    #ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
+    ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
     writer= pd.ExcelWriter(ruta+r'\Pol_rtas.xlsx')
     df_pol.to_excel(writer, sheet_name='Proyecciones', index=False)
     df_pol2.to_excel(writer, sheet_name='Coordenadas', index=False)
