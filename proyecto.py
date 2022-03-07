@@ -99,10 +99,10 @@ class Topoutils():
         self.error_permitido=error_permitido
         return error_permitido
 
-    def suma_and_corr_ang(self,angulos_list,corr_error):
+    def suma_and_corr_ang(self,angulos, corr_error=0):
         suma_ang_corr=0
         ang_corr_list=[]
-        for angulo in angulos_list:
+        for angulo in angulos:
             angulo_decimal = self.gms_angle_to_decimals(angulo)
             angulocorr=angulo_decimal+corr_error
             ang_corr_list.append(angulocorr)
@@ -236,7 +236,7 @@ class Topoutils():
                 centinela+=1
                 break
 
-        self.suma_coord=[sumacoord_y,sumacoord_x]
+        self.suma_coord=[round(sumacoord_y,3),round(sumacoord_x,3)]
         return self.suma_coord
 
     def error_dist_suma_dist_precision(self,suma_coord):
@@ -291,7 +291,6 @@ class Topoutils():
         corr_user=3
         if corr_user==3:
 
-
             suma_proy_y_corr=0
             suma_proy_x_corr=0
             list_proy_y_corr=[]
@@ -303,7 +302,6 @@ class Topoutils():
             F3=[]
 
             centinela=0  
-            print(list_coord)
             for proy in list_coord:
                 while centinela!=len(list_coord):
 
@@ -327,8 +325,6 @@ class Topoutils():
                     A=( ( (suma_coord[1]*suma_f1)- (suma_coord[0]*suma_f3) )/ ( (suma_f3*suma_f2) - (m.pow(suma_f1,2) ) ) )
                     B=( ( (suma_coord[0]*suma_f1)- (suma_coord[1]*suma_f2) )/ ( (suma_f3*suma_f2) - (m.pow(suma_f1,2) ) ) )
                     break
-
-
             print(suma_coord)
             print(suma_f1)
             print(suma_f2)
@@ -588,19 +584,28 @@ def main():
 
     suma_ang=info_topo.suma_ang(angulos_list)
 
+
     error_ang=info_topo.error_angular(suma_ang)
 
     error_per=info_topo.error_per(error_ang)
 
     corr_error=info_topo.correccion_error(error_ang[0])
 
-    suma_and_list_ang=info_topo.suma_and_corr_ang(angulos_list,corr_error)
+    suma_and_ang=info_topo.suma_and_corr_ang(angulos_list,corr_error)
     
     rumbo=info_topo.bearing_and_distance()
 
     azimut_inicial=info_topo.azimut_ini(rumbo)
 
-    azimut_corr=info_topo.azimut_and_contra(azimut_inicial, suma_and_list_ang[1])
+    print(angulos_list)
+
+    suma_and_ang_sin_corr=info_topo.suma_and_corr_ang(angulos_list)
+
+    azimut_sin_corr=info_topo.azimut_and_contra(azimut_inicial, suma_and_ang_sin_corr[1])
+
+    print(azimut_sin_corr)
+
+    azimut_corr=info_topo.azimut_and_contra(azimut_inicial, suma_and_ang[1])
 
     list_coord=info_topo.coord_list(azimut_corr[2],dist_list)
     
@@ -621,7 +626,7 @@ def main():
 
     list_corr_df_final=info_topo.pd_list_corr(ang_list_df_final,corr_error)
         
-    list_ang_corr_df_final=info_topo.pd_list_ang_corr(suma_and_list_ang)
+    list_ang_corr_df_final=info_topo.pd_list_ang_corr(suma_and_ang)
 
     list_azimut_df_final=info_topo.pd_list_azimut(azimut_corr)
     
