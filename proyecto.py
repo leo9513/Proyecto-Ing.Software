@@ -110,6 +110,17 @@ class Topoutils():
         self.suma_and_corr_ang=[suma_ang_corr,ang_corr_list]
         return self.suma_and_corr_ang
 
+    def suma_and_corr(self,angulos, corr_error=0):
+        suma_ang_corr=0
+        ang_corr_list=[]
+        for angulo in angulos:
+            angulo_decimal = self.gms_angle_to_decimals(angulo)
+            angulocorr=angulo_decimal+corr_error
+            ang_corr_list.append(angulocorr)
+            suma_ang_corr+=angulocorr
+        self.suma_and_corr_ang=[suma_ang_corr,ang_corr_list]
+        return self.suma_and_corr_ang
+
     def bearing_and_distance(self):
         global x1
         global y1
@@ -213,11 +224,45 @@ class Topoutils():
                 break
         self.coord_list=coord_list
         return coord_list
+
+    def list_coord(self,azimut_corr,dist_list):
+        coord_list=[]
+        centinela=0
+        for azimut in azimut_corr:
+            while centinela!=len(azimut_corr):
+                coord_px_py=self.proy(azimut,dist_list[centinela])
+                coord_list.append(coord_px_py)
+                centinela+=1
+                break
+        self.coord_list=coord_list
+        return coord_list
     
 
     def suma_coord(self,coord,azimut_corr):
 
+        sumacoord_y=0
+        centinela=0
+        index=0
+        for coordenada in coord:
+            while centinela!=len(azimut_corr[2]):
+                sumacoord_y+=coordenada[index]
+                centinela+=1
+                break
+        
+        sumacoord_x=0
+        centinela=0
+        index=1
+        for coordenada in coord:
+            while centinela!=len(azimut_corr[2]):
+                sumacoord_x+=coordenada[index]
+                centinela+=1
+                break
 
+        self.suma_coord=[round(sumacoord_y,3),round(sumacoord_x,3)]
+        return self.suma_coord
+
+    def coord_suma(self,coord,azimut_corr):
+    
         sumacoord_y=0
         centinela=0
         index=0
@@ -271,15 +316,43 @@ class Topoutils():
         self.corr_error=corr_error
         return self.corr_error
 
-    def corr_error_proy_crandall(self,error, suma_acumulada, acumulada_transito,centinela):
-        if error>0:
-            corr_error=-(acumulada_transito[centinela]*error)/suma_acumulada
-        if error<0:
-            corr_error=(acumulada_transito[centinela]*abs(error))/suma_acumulada
-        self.corr_error=corr_error
+    def corr_error_proy_crandall(self,list_coord_sin_corr,list_dist,suma_corrd_sin_corr,auxiliar):
+        F1=[]
+        F2=[]
+        F3=[]
+        centinela=0  
+        for proy in list_coord_sin_corr:
+            while centinela!=len(list_coord_sin_corr):
+                suma_f1=0
+                suma_f2=0
+                suma_f3=0
+                valor1=(proy[0]*proy[1])/list_dist[centinela]
+                valor2=(m.pow(proy[0],2))/list_dist[centinela]
+                valor3=(m.pow(proy[1],2))/list_dist[centinela]
+                F1.append(valor1)
+                F2.append(valor2)
+                F3.append(valor3)
+                centinela+=1
+                for valor in F1:
+                    suma_f1+=valor
+                for valor2 in F2:
+                    suma_f2+=valor2
+                for valor3 in F3:
+                    suma_f3+=valor3
+                break
+
+        A=( ( (suma_corrd_sin_corr[1]*suma_f1)- (suma_corrd_sin_corr[0]*suma_f3) )/ ( (suma_f3*suma_f2) - (m.pow(suma_f1,2) ) ) )
+        B=( ( (suma_corrd_sin_corr[0]*suma_f1)- (suma_corrd_sin_corr[1]*suma_f2) )/ ( (suma_f3*suma_f2) - (m.pow(suma_f1,2) ) ) )
+                
+
+        corr_N=(A*F2[auxiliar])+(B*F1[auxiliar])
+        corr_E=(A*F1[auxiliar])+(B*F3[auxiliar])
+
+        self.corr_error=[corr_N,corr_E]
+        
         return self.corr_error
 
-    def corr_proyecciones(self,list_coord,suma_coord,list_dist):
+    def corr_proyecciones(self,list_coord,suma_coord,list_dist,list_coord_sin_corr, suma_corrd_sin_corr):
 
         suma_dist=0
         suma_dist_list=[]
@@ -290,48 +363,47 @@ class Topoutils():
         #corr_user=int(input("Digite '1,2 o 3' para corregir segun el metodo: \n1.Brujula \n2.Transito \n3.Crandall \n"))
         corr_user=3
         if corr_user==3:
-
             suma_proy_y_corr=0
             suma_proy_x_corr=0
             list_proy_y_corr=[]
             list_proy_x_corr=[]
             corr_error_y=[]
             corr_error_x=[]
-            F1=[]
-            F2=[]
-            F3=[]
 
-            centinela=0  
-            for proy in list_coord:
-                while centinela!=len(list_coord):
-
-                    suma_f1=0
-                    suma_f2=0
-                    suma_f3=0
-
-                    valor1=(proy[0]*proy[1])/list_dist[centinela]
-                    valor2=(m.pow(proy[0],2))/list_dist[centinela]
-                    valor3=(m.pow(proy[1],2))/list_dist[centinela]
-                    F1.append(valor1)
-                    F2.append(valor2)
-                    F3.append(valor3)
+            index=0
+            centinela=0
+            for proy_y in list_coord_sin_corr:
+                while centinela!=len(list_coord_sin_corr):
+                    if centinela==0:
+                            corr_proy=self.corr_error_proy_crandall(list_coord_sin_corr,list_dist,suma_corrd_sin_corr,centinela)
+                            corr_proy_y=corr_proy[index]
+                    else:
+                        corr_proy=self.corr_error_proy_crandall(list_coord_sin_corr,list_dist,suma_corrd_sin_corr,centinela)
+                        corr_proy_y=corr_proy[index]
+                    corr_error_y.append(round(corr_proy_y,3))
+                    proy_y_corr=proy_y[index]+round(corr_proy_y,3)
+                    list_proy_y_corr.append(round(proy_y_corr,3))
+                    suma_proy_y_corr+=round(proy_y_corr,3)
                     centinela+=1
-                    for valor in F1:
-                        suma_f1+=valor
-                    for valor2 in F2:
-                        suma_f2+=valor2
-                    for valor3 in F3:
-                        suma_f3+=valor3
-                    A=( ( (suma_coord[1]*suma_f1)- (suma_coord[0]*suma_f3) )/ ( (suma_f3*suma_f2) - (m.pow(suma_f1,2) ) ) )
-                    B=( ( (suma_coord[0]*suma_f1)- (suma_coord[1]*suma_f2) )/ ( (suma_f3*suma_f2) - (m.pow(suma_f1,2) ) ) )
                     break
-            print(suma_coord)
-            print(suma_f1)
-            print(suma_f2)
-            print(suma_f3)
-            print(A)
-            print(B)
-            suma_proy_y_corr=round(suma_proy_y_corr,3)
+
+            index=1
+            centinela=0
+            for proy_x in list_coord_sin_corr:
+                while centinela!=len(list_coord_sin_corr):
+                    if centinela==0:
+                            corr_proy=self.corr_error_proy_crandall(list_coord_sin_corr,list_dist,suma_corrd_sin_corr,centinela)
+                            corr_proy_x=corr_proy[index]
+                    else:
+                        corr_proy=self.corr_error_proy_crandall(list_coord_sin_corr,list_dist,suma_corrd_sin_corr,centinela)
+                        corr_proy_x=corr_proy[index]
+                    corr_error_x.append(round(corr_proy_x,3))
+                    proy_x_corr=proy_x[index]+round(corr_proy_x,3)
+                    list_proy_x_corr.append(round(proy_x_corr,3))
+                    suma_proy_x_corr+=round(proy_x_corr,3)
+                    centinela+=1
+                    break
+            
         else:
             suma_proy_y_corr=0
             list_proy_y_corr=[]
@@ -584,7 +656,6 @@ def main():
 
     suma_ang=info_topo.suma_ang(angulos_list)
 
-
     error_ang=info_topo.error_angular(suma_ang)
 
     error_per=info_topo.error_per(error_ang)
@@ -596,27 +667,27 @@ def main():
     rumbo=info_topo.bearing_and_distance()
 
     azimut_inicial=info_topo.azimut_ini(rumbo)
-
-    print(angulos_list)
-
-    suma_and_ang_sin_corr=info_topo.suma_and_corr_ang(angulos_list)
+    
+    suma_and_ang_sin_corr=info_topo.suma_and_corr(angulos_list)
 
     azimut_sin_corr=info_topo.azimut_and_contra(azimut_inicial, suma_and_ang_sin_corr[1])
-
-    print(azimut_sin_corr)
 
     azimut_corr=info_topo.azimut_and_contra(azimut_inicial, suma_and_ang[1])
 
     list_coord=info_topo.coord_list(azimut_corr[2],dist_list)
-    
+
+    list_coord_sin_corr=info_topo.list_coord(azimut_sin_corr[2],dist_list)
+
     suma_coord=info_topo.suma_coord(list_coord,azimut_corr)
+
+    suma_coord_sin_corr=info_topo.coord_suma(list_coord_sin_corr,azimut_sin_corr)
 
     error_dist_suma_dist_precision=info_topo.error_dist_suma_dist_precision(suma_coord)
 
-    list_proy_corr=info_topo.corr_proyecciones(list_coord,suma_coord,dist_list)
-
+    list_proy_corr=info_topo.corr_proyecciones(list_coord,suma_coord,dist_list,list_coord_sin_corr,suma_coord_sin_corr)
 
     coordenadas_finales=info_topo.coordenadas(list_proy_corr)
+
 
 
 
