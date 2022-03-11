@@ -361,7 +361,8 @@ class Topoutils():
             suma_dist_list.append(suma_dist)
 
         #corr_user=int(input("Digite '1,2 o 3' para corregir segun el metodo: \n1.Brujula \n2.Transito \n3.Crandall \n"))
-        corr_user=3
+        global corr_user
+        corr_user=2
         if corr_user==3:
             suma_proy_y_corr=0
             suma_proy_x_corr=0
@@ -599,7 +600,6 @@ class Topoutils():
         return self.list_nan
 
     def pd_list_corr_proy_x(self, list_proy_corr,ang_list_df_final):
-
         list_corr_x=[]
         contador=0
         index=3
@@ -610,7 +610,30 @@ class Topoutils():
 
         self.list_nan=self.agregar_nan(list_corr_x, ang_list_df_final,list_corr_x)
         return self.list_nan
-    
+    def pd_list_proy_corr_y(self, list_proy_corr,ang_list_df_final):
+        list_corr_y=[]
+        contador=0
+        index=0
+        while contador!=len(list_proy_corr[0]):
+            list_corr_y.append('NaN')
+            list_corr_y.append(list_proy_corr[index][contador])
+            contador+=1
+
+        self.list_nan=self.agregar_nan(list_corr_y, ang_list_df_final,list_corr_y)
+        return self.list_nan
+
+    def pd_list_proy_corr_x(self, list_proy_corr,ang_list_df_final):
+        list_corr_x=[]
+        contador=0
+        index=1
+        while contador!=len(list_proy_corr[1]):
+            list_corr_x.append('NaN')
+            list_corr_x.append(list_proy_corr[index][contador])
+            contador+=1
+
+        self.list_nan=self.agregar_nan(list_corr_x, ang_list_df_final,list_corr_x)
+        return self.list_nan
+
     def pd_list_coord_proy_y(self,coordenadas_finales):
 
         coordenadas_y=[]
@@ -688,9 +711,6 @@ def main():
 
     coordenadas_finales=info_topo.coordenadas(list_proy_corr)
 
-
-
-
     #Funciones para datafream
 
     list_ang=info_topo.pd_list_ang(ang_list_df_final)
@@ -700,15 +720,25 @@ def main():
     list_ang_corr_df_final=info_topo.pd_list_ang_corr(suma_and_ang)
 
     list_azimut_df_final=info_topo.pd_list_azimut(azimut_corr)
+
+    list_azimut_sin_corr_df_final=info_topo.pd_list_azimut(azimut_sin_corr)
     
     list_proyecciones_N=info_topo.pd_list_proyeccionesN(list_coord,ang_list_df_final)
 
     list_proyecciones_E=info_topo.pd_list_proyeccionesE(list_coord,ang_list_df_final)
 
+    list_proyecciones_N_sin_corr=info_topo.pd_list_proyeccionesN(list_coord_sin_corr,ang_list_df_final)
+    
+    list_proyecciones_E_sin_corr=info_topo.pd_list_proyeccionesE(list_coord_sin_corr,ang_list_df_final)
+
     list_corr_y=info_topo.pd_list_corr_proy_y(list_proy_corr,ang_list_df_final)
 
     list_corr_x=info_topo.pd_list_corr_proy_x(list_proy_corr,ang_list_df_final)
 
+    list_proy_y=info_topo.pd_list_proy_corr_y(list_proy_corr,ang_list_df_final)
+
+    list_proy_x=info_topo.pd_list_proy_corr_x(list_proy_corr,ang_list_df_final)
+    
     coordenadas_y=info_topo.pd_list_coord_proy_y(coordenadas_finales)
 
     coordenadas_x=info_topo.pd_list_coord_proy_x(coordenadas_finales)
@@ -716,53 +746,75 @@ def main():
     list_parametros_ang2=info_topo.pd_list_parametros_ang(suma_ang, error_ang,error_per,corr_error)
 
     list_parametros_proyecciones2=info_topo.pd_list_parametros_proyecciones(error_dist_suma_dist_precision,suma_coord)
-        
-    dic_pol={
-        u'\u0394':deltas_list,
-        u'\u03bf':puntos_list,
-        'Ang.Obs(GGGMMSS)':list_ang,
-        'Corr(GGGMMSS)':list_corr_df_final,
-        'Ang.corr(GGGMMSS)':list_ang_corr_df_final,
-        'Azimut(GGGMMSS)':list_azimut_df_final,
-        'Dist':dist_list_df_final,
-        'Proy Y':list_proyecciones_N,
-        'Proy X':list_proyecciones_E
-        }
+    if corr_user==3:
+        dic_pol={
+            u'\u0394':deltas_list,
+            u'\u03bf':puntos_list,
+            'Ang.Obs(GGGMMSS)':list_ang,
+            'Azimut(GGGMMSS)':list_azimut_sin_corr_df_final,
+            'Dist':dist_list_df_final,
+            'Proy Y':list_proyecciones_N_sin_corr,
+            'Proy X':list_proyecciones_E_sin_corr,
+            }
 
-    dic_2_pol={
-        'Proy Y':list_proyecciones_N,
-        'Proy X':list_proyecciones_E,
-        'Corr Y':list_corr_y,
-        'Corr X':list_corr_x,
-        'Coord N':coordenadas_y,
-        'Coord E':coordenadas_x
-        }
+        dic_2_pol={
+            'Proy Y':list_proyecciones_N_sin_corr,
+            'Proy X':list_proyecciones_E_sin_corr,
+            'Corr Y':list_corr_y,
+            'Corr X':list_corr_x,
+            'Proy corr Y':list_proy_y,
+            'Proy corr X':list_proy_x,
+            'Coord N':coordenadas_y,
+            'Coord E':coordenadas_x
+            }
+    else:
+        dic_pol={
+            u'\u0394':deltas_list,
+            u'\u03bf':puntos_list,
+            'Ang.Obs(GGGMMSS)':list_ang,
+            'Corr(GGGMMSS)':list_corr_df_final,
+            'Ang.corr(GGGMMSS)':list_ang_corr_df_final,
+            'Azimut(GGGMMSS)':list_azimut_df_final,
+            'Dist':dist_list_df_final,
+            'Proy Y':list_proyecciones_N,
+            'Proy X':list_proyecciones_E
+            }
 
-    dic_3_pol={
-        '':list_parametros_ang,
-        ' ':list_parametros_ang2,
-        '  ':list_parametros_proyecciones,
-        '   ':list_parametros_proyecciones2,
-        }
+        dic_2_pol={
+            'Proy Y':list_proyecciones_N,
+            'Proy X':list_proyecciones_E,
+            'Corr Y':list_corr_y,
+            'Corr X':list_corr_x,
+            'Proy corr Y':list_proy_y,
+            'Proy corr X':list_proy_x,
+            'Coord N':coordenadas_y,
+            'Coord E':coordenadas_x
+            }
+
+        dic_3_pol={
+            '':list_parametros_ang,
+            ' ':list_parametros_ang2,
+            '  ':list_parametros_proyecciones,
+            '   ':list_parametros_proyecciones2,
+            }
 
     df_pol=pd.DataFrame(dic_pol)
     df_pol=df_pol.replace("NaN"," ")
     df_pol=df_pol.fillna(" ")
-
     df_pol2=pd.DataFrame(dic_2_pol)
     df_pol2=df_pol2.replace("NaN"," ")
     df_pol2=df_pol2.fillna(" ")
-
-    df_pol3=pd.DataFrame(dic_3_pol)
-    df_pol3=df_pol3.replace("NaN"," ")
-    df_pol3=df_pol3.fillna(" ")
-
+    if corr_user!=3:
+        df_pol3=pd.DataFrame(dic_3_pol)
+        df_pol3=df_pol3.replace("NaN"," ")
+        df_pol3=df_pol3.fillna(" ")
     #ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
     ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
     writer= pd.ExcelWriter(ruta+r'\Pol_rtas.xlsx')
     df_pol.to_excel(writer, sheet_name='Proyecciones', index=False)
     df_pol2.to_excel(writer, sheet_name='Coordenadas', index=False)
-    df_pol3.to_excel(writer, sheet_name='Parametros Pol', index=False)
+    if corr_user!=3:
+        df_pol3.to_excel(writer, sheet_name='Parametros Pol', index=False)
     writer.save()
 
 
