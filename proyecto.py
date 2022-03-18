@@ -2,7 +2,7 @@
 
 import pandas as pd
 import math as m
-#inputfile=input("Ingrese la ruta en la que se guardara el archivo base: \n")
+#inputfile=input("Ingrese la ruta en la que se guardara el archivo base sin comillas: \n")
 inputfile=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software\basePolCerrada.xlsx"
 
 df=pd.read_excel(inputfile)
@@ -15,7 +15,7 @@ ang_list_df_final=df['Ang.Obs(GGGMMSS)'].to_list()
 
 dist_list_df_final=df['Dist'].to_list()
 
-df_datos=df[df['Ang.Obs(GGGMMSS)']!=0]
+df_datos=df[df['Ang.Obs(GGGMMSS)']!=0]  
 
 angulos_list=df_datos['Ang.Obs(GGGMMSS)'].tolist()
 
@@ -32,11 +32,16 @@ list_parametros_proyecciones=['\u03A3'+'DIST','\u0394'+'PNS','\u0394'+'PEW','e d
 
 class Topoutils():
     def gms_angle_to_decimals(self, gms_angle):
-        minutes, degree_part = m.modf(gms_angle / 10000)
-        seconds, minutes= m.modf(minutes*100)
-        seconds *=100
-
-        self.decimal_angle =  degree_part + minutes/60 + seconds /3600
+        gms_angle/=10000
+        grados = int(gms_angle)
+        aux = (gms_angle - grados)*100
+        minutos = int(round(aux,0))
+        segundos = round((aux - minutos) * 100,0)
+        if segundos<=0:
+            segundos*=-1
+            # Calcula el angulo decimal
+        self.decimal_angle = grados + minutos / 60 + segundos / 3600
+     
         return self.decimal_angle
 
     def decimal_angle_to_gms(self, decimal_angle, total_decimals =0):
@@ -62,8 +67,7 @@ class Topoutils():
         return self.suma
 
     def error_angular(self,suma_angulo):
-        #sentido = float(input("Digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: \n"))
-        sentido=2
+        sentido = float(input("Digite '1' si la poligonal tiene angulos internos, digite '2' si son externos: \n"))
         if sentido==1:
                 angulos_i = suma_angulo
                 angulos_teo = float((vertices-2)*180+360)
@@ -76,17 +80,19 @@ class Topoutils():
         return self.cierre_and_angTeo   
         
     def correccion_error(self,error):
-        if error>0:
-            corr_error=-error/(vertices+1)
-        if error<0:
-            corr_error=abs(error)/(vertices+1)
-        self.corr_error=corr_error
-        return self.corr_error
+        try:
+            if error>0:
+                corr_error=-error/(vertices+1)
+            if error<0:
+                corr_error=abs(error)/(vertices+1)
+            self.corr_error=corr_error
+            return self.corr_error
+        except ValueError:
+            print('No hay errror angulas :0')
 
     def error_per(self, error_angular):
 
-        #precision_estacion=float(input("Ingrese el precisión a la que mide la estación GGGMMSS \n"))
-        precision_estacion=10
+        precision_estacion=float(input("Ingrese la precisión a la que mide la estación GGGMMSS \n"))
         error_perm=precision_estacion*vertices
         error_permi=self.gms_angle_to_decimals(error_perm)
         error_permitido=self.decimal_angle_to_gms(error_permi)
@@ -293,12 +299,14 @@ class Topoutils():
             suma_dist+=dist
             
         precision=suma_dist/error_dist
-
+        """
         if precision<=9000:
             print("Devuelvase a campo mi papá, la precisión es de "+str(precision))
             quit()
+        """    
         self.error_dist_suma_dist_precision=[error_dist,suma_dist,precision]
         return self.error_dist_suma_dist_precision
+
 
     def corr_error_proy_brujula(self,error, suma_dist_list, suma_dist,centinela):
         if error>0:
@@ -360,9 +368,11 @@ class Topoutils():
             suma_dist+=dist
             suma_dist_list.append(suma_dist)
 
-        #corr_user=int(input("Digite '1,2 o 3' para corregir segun el metodo: \n1.Brujula \n2.Transito \n3.Crandall \n"))
         global corr_user
-        corr_user=2
+
+        corr_user=int(input("Digite '1,2 o 3' para corregir segun el metodo: \n1.Brujula \n2.Transito \n3.Crandall \n"))
+        
+        
         if corr_user==3:
             suma_proy_y_corr=0
             suma_proy_x_corr=0
@@ -504,7 +514,6 @@ class Topoutils():
 
     #Funciones Datafream
     def pd_list_ang(self,ang_list_df_final):
-
         list_ang=[]
         for ang in ang_list_df_final:
             angulo=self.gms_angle_to_decimals(ang)
@@ -808,7 +817,7 @@ def main():
         df_pol3=pd.DataFrame(dic_3_pol)
         df_pol3=df_pol3.replace("NaN"," ")
         df_pol3=df_pol3.fillna(" ")
-    #ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx: \n")
+    #ruta=input("Ingrese la ruta en la que quiere que se guarde el xlsx sin comillas: \n")
     ruta=r"C:\Users\leoda\Desktop\Materias U\Materias 5 semestre\Ing de software\proyecto_ing_software"
     writer= pd.ExcelWriter(ruta+r'\Pol_rtas.xlsx')
     df_pol.to_excel(writer, sheet_name='Proyecciones', index=False)
@@ -816,7 +825,7 @@ def main():
     if corr_user!=3:
         df_pol3.to_excel(writer, sheet_name='Parametros Pol', index=False)
     writer.save()
-
+    print("el calculo de la poligonal se realizo exitosamente :D")
 
 if __name__ == main():
     main()
